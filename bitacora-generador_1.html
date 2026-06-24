@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bitácora Generador Eléctrico</title>
+<style>
+:root {
+  --navy: #1a3a6b;
+  --navy2: #22497f;
+  --blue: #2563eb;
+  --blue-light: #dbeafe;
+  --blue-mid: #3b82f6;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --orange: #ea580c;
+  --orange-light: #ffedd5;
+  --yellow: #ca8a04;
+  --yellow-light: #fef9c3;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --gray: #f1f5f9;
+  --gray2: #e2e8f0;
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --white: #ffffff;
+  --border: #e2e8f0;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  --mono: 'Courier New', Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--gray); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 15px; }
+body { min-height: 100vh; }
+
+/* ── HEADER ── */
+.app-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+  color: white; padding: 14px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.header-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.hbtn {
+  padding: 7px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.1); color: white; font-size: 12px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+  white-space: nowrap;
+}
+.hbtn:hover { background: rgba(255,255,255,0.2); }
+.hbtn.primary { background: #2563eb; border-color: #2563eb; }
+.hbtn.green { background: #16a34a; border-color: #16a34a; }
+.hbtn.red { background: rgba(220,38,38,0.8); border-color: rgba(220,38,38,0.6); }
+
+/* ── NAV TABS ── */
+.nav-tabs {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: 0 20px; display: flex; gap: 4px;
+}
+.nav-tab {
+  padding: 12px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent;
+  transition: all 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.nav-tab:hover { color: var(--navy); }
+.nav-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+.nav-tab .badge-count {
+  background: var(--navy); color: white; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 20px; min-width: 18px; text-align: center;
+}
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── DASHBOARD ── */
+.dash { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+.metrics { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+@media(min-width:640px){ .metrics { grid-template-columns: repeat(4,1fr); } }
+
+.metric-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  box-shadow: var(--shadow); text-align: center;
+}
+.metric-val { font-size: 36px; font-weight: 800; font-family: var(--mono); line-height: 1.1; }
+.metric-label { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 500; }
+.metric-card.total .metric-val { color: var(--navy); }
+.metric-card.emergencia .metric-val { color: var(--red); }
+.metric-card.programada .metric-val { color: var(--green); }
+.metric-card.proveedor .metric-val { color: var(--orange); }
+
+/* Progress bar */
+.progress-wrap {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.progress-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; }
+.progress-bar-track {
+  height: 10px; background: var(--gray2); border-radius: 5px; overflow: hidden; margin-bottom: 6px;
+}
+.progress-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--navy), var(--blue-mid));
+  border-radius: 5px; transition: width 0.5s ease;
+}
+.progress-label { font-size: 12px; color: var(--text2); display: flex; justify-content: space-between; }
+
+/* Sheets link */
+.sheets-link {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--text2); text-decoration: none;
+  box-shadow: var(--shadow); margin-bottom: 16px; transition: border-color 0.15s;
+}
+.sheets-link:hover { border-color: var(--green); color: var(--green); }
+
+/* Section header */
+.section-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.section-title { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; color: var(--text2); }
+.btn-refresh {
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--white); color: var(--text2); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 4px; box-shadow: var(--shadow); transition: all 0.15s;
+}
+.btn-refresh:hover { border-color: var(--navy); color: var(--navy); }
+
+/* Record cards */
+.record-list { display: flex; flex-direction: column; gap: 10px; }
+.rec {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 16px;
+  box-shadow: var(--shadow); cursor: pointer;
+  border-left: 4px solid transparent; transition: box-shadow 0.15s, border-color 0.15s;
+}
+.rec:hover { box-shadow: var(--shadow-md); }
+.rec.emergencia { border-left-color: var(--red); }
+.rec.programada { border-left-color: var(--green); }
+.rec.proveedor { border-left-color: var(--orange); }
+.rec-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 3px 10px; border-radius: 20px;
+}
+.badge.emergencia { background: var(--red-light); color: var(--red); }
+.badge.programada { background: var(--green-light); color: var(--green); }
+.badge.proveedor { background: var(--orange-light); color: var(--orange); }
+.rec-fecha { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.rec-op { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.rec-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  font-size: 11px; font-family: var(--mono); font-weight: 600;
+  padding: 3px 9px; border-radius: 6px; background: var(--gray); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.pill.ok { background: var(--green-light); color: var(--green); border-color: #bbf7d0; }
+.pill.warn { background: var(--orange-light); color: var(--orange); border-color: #fed7aa; }
+.pill.fuel { background: var(--blue-light); color: var(--navy); border-color: #bfdbfe; }
+
+.empty {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 60px 20px;
+  text-align: center; color: var(--text3); box-shadow: var(--shadow);
+}
+.empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+
+/* ── FORM ── */
+.form-view { max-width: 600px; margin: 0 auto; }
+
+.form-header {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: 16px 20px 0;
+}
+.form-steps { display: flex; gap: 6px; margin-bottom: 12px; }
+.step-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.step-circle {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--text3);
+  background: var(--white); transition: all 0.2s; position: relative; z-index:1;
+}
+.step-circle.active { border-color: var(--navy); color: var(--navy); background: var(--blue-light); }
+.step-circle.skipped { border-color: var(--border); color: var(--text3); background: var(--gray2); font-size: 10px; }
+.step-circle.done { border-color: var(--green); color: white; background: var(--green); }
+.step-label { font-size: 10px; color: var(--text3); font-weight: 500; text-align: center; }
+.step-label.active { color: var(--navy); font-weight: 700; }
+.step-connector { flex: 1; height: 2px; background: var(--border); margin-top: 13px; transition: background 0.2s; }
+.step-connector.done { background: var(--green); }
+
+.form-body { padding: 20px; }
+.form-section { display: none; }
+.form-section.active { display: block; }
+.section-head { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.section-sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; }
+
+/* Tipo cards */
+.tipo-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 8px; }
+.tipo-card {
+  border: 2px solid var(--border); border-radius: var(--radius-lg);
+  padding: 18px 10px; text-align: center; cursor: pointer;
+  background: var(--white); transition: all 0.2s; box-shadow: var(--shadow);
+}
+.tipo-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.tipo-card.sel-emergencia { background: var(--red-light); border-color: var(--red); }
+.tipo-card.sel-programada { background: var(--green-light); border-color: var(--green); }
+.tipo-card.sel-proveedor { background: var(--orange-light); border-color: var(--orange); }
+.tipo-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+.tipo-name { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; color: var(--text2); }
+.tipo-card.sel-emergencia .tipo-name { color: var(--red); }
+.tipo-card.sel-programada .tipo-name { color: var(--green); }
+.tipo-card.sel-proveedor .tipo-name { color: var(--orange); }
+
+/* Fields */
+.field { margin-bottom: 14px; }
+.field > label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--text2); display: block; margin-bottom: 5px;
+}
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+  color: var(--text); font-size: 14px; font-family: inherit;
+  box-shadow: var(--shadow); transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+.field input[type=number] { font-family: var(--mono); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field-hint { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Fuel section */
+.fuel-card {
+  background: var(--blue-light); border: 1px solid #bfdbfe;
+  border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 16px;
+}
+.fuel-title { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.fuel-bar-wrap { margin-bottom: 4px; }
+.fuel-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.fuel-bar-track { height: 12px; background: rgba(255,255,255,0.7); border-radius: 6px; overflow: hidden; border: 1px solid #bfdbfe; }
+.fuel-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+
+/* Params header */
+.params-banner {
+  background: var(--navy); color: white;
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px;
+  font-size: 12px; display: flex; align-items: center; gap: 8px;
+}
+.led { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; flex-shrink: 0; }
+.params-nom { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+/* Estado buttons */
+.estado-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.estado-btn {
+  border: 2px solid var(--border); border-radius: var(--radius-lg);
+  padding: 14px; cursor: pointer; background: var(--white);
+  text-align: left; transition: all 0.18s; box-shadow: var(--shadow);
+  position: relative;
+}
+.estado-btn:hover { border-color: var(--navy); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.estado-btn.selected {
+  border-color: var(--green); background: var(--green-light);
+  transform: translateY(-2px); box-shadow: var(--shadow-md);
+}
+.estado-num { font-size: 9px; color: var(--text3); font-family: var(--mono); font-weight: 700; letter-spacing: 0.06em; }
+.estado-btn.selected .estado-num { color: var(--green); }
+.estado-name { font-size: 13px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+.estado-btn.selected .estado-name { color: var(--green); }
+.estado-desc { font-size: 11px; color: var(--text2); line-height: 1.4; }
+.estado-chk {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: transparent;
+  transition: all 0.18s; flex-shrink: 0;
+}
+.estado-btn.selected .estado-chk {
+  background: var(--green); border-color: var(--green); color: white;
+}
+
+/* Form nav */
+.form-nav { display: flex; gap: 10px; margin-top: 20px; padding-bottom: 32px; }
+.btn-back {
+  padding: 12px 20px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--white);
+  color: var(--text2); font-size: 14px; font-weight: 600; cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.btn-next {
+  flex: 1; padding: 12px; border-radius: var(--radius); border: none;
+  background: var(--navy); color: white; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s; box-shadow: var(--shadow-md);
+}
+.btn-next:hover { opacity: 0.88; }
+.btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-save {
+  flex: 1; padding: 14px; border-radius: var(--radius); border: none;
+  background: linear-gradient(135deg, #15803d, #16a34a); color: white;
+  font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity 0.15s;
+  box-shadow: var(--shadow-md);
+}
+.btn-save:hover { opacity: 0.9; }
+.btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.5);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white); border-radius: 20px 20px 0 0;
+  padding: 20px 20px 32px; width: 100%; max-width: 600px;
+  max-height: 88vh; overflow-y: auto;
+  transform: translateY(30px); transition: transform 0.25s;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--gray); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--text2); flex-shrink: 0;
+}
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.detail-cell {
+  background: var(--gray); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+}
+.detail-cell.full { grid-column: 1/-1; }
+.detail-cell > label { font-size: 10px; color: var(--text3); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 3px; }
+.detail-val { font-size: 14px; font-weight: 700; font-family: var(--mono); color: var(--text); }
+.detail-val.blue { color: var(--navy); }
+.detail-val.green { color: var(--green); }
+.detail-val.red { color: var(--red); }
+.detail-val.orange { color: var(--orange); }
+.btn-delete {
+  width: 100%; padding: 11px; border-radius: var(--radius);
+  border: 1px solid #fca5a5; background: none;
+  color: var(--red); font-size: 13px; font-weight: 600; cursor: pointer;
+  margin-top: 4px; transition: background 0.15s;
+}
+.btn-delete:hover { background: var(--red-light); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--navy); color: white;
+  padding: 10px 22px; border-radius: 20px;
+  font-size: 13px; font-weight: 600; z-index: 300;
+  opacity: 0; transition: opacity 0.25s; pointer-events: none;
+  white-space: nowrap; box-shadow: var(--shadow-md);
+}
+.toast.show { opacity: 1; }
+.toast.ok { background: var(--green); }
+.toast.err { background: var(--red); }
+
+/* Site selector */
+.site-group-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+  color: var(--text3); margin: 10px 0 6px; text-transform: uppercase;
+}
+.site-grid {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;
+}
+.site-btn {
+  padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.03em; cursor: pointer; border: 2px solid var(--border);
+  background: var(--white); color: var(--text2); transition: all 0.12s;
+  user-select: none; white-space: nowrap;
+}
+.site-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); opacity: 0.85; }
+.site-btn.selected { color: white; border-color: transparent; box-shadow: var(--shadow-md); }
+.site-btn.hidden { display: none; }
+
+/* Falla quick-select buttons */
+.falla-btn {
+  padding: 6px 13px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 1.5px solid #fecaca; background: var(--white);
+  color: #991b1b; transition: all 0.15s; user-select: none;
+}
+.falla-btn:hover { background: #fee2e2; }
+.falla-btn.selected { background: #dc2626; border-color: #dc2626; color: white; }
+.chk-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.12s; gap: 12px;
+}
+.chk-row:hover { background: var(--gray); }
+.chk-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+.chk-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--gray); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: var(--text2);
+  flex-shrink: 0; font-family: var(--mono);
+}
+.chk-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 1px; }
+.chk-hint { font-size: 11px; color: var(--text3); }
+.chk-box {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  border: 2px solid var(--border); background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.chk-box.checked {
+  background: var(--green); border-color: var(--green);
+}
+.chk-inner {
+  font-size: 14px; font-weight: 800; color: transparent; transition: color 0.15s;
+}
+.chk-box.checked .chk-inner { color: white; }
+
+@media(max-width:480px){
+  .tipo-grid { grid-template-columns: 1fr; gap: 8px; }
+  .tipo-card { padding: 12px 16px; display: flex; align-items: center; gap: 12px; text-align: left; }
+  .tipo-icon { font-size: 22px; margin-bottom: 0; }
+  .field-row3 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-left">
+    <!-- Generator SVG illustration -->
+    <svg width="64" height="52" viewBox="0 0 64 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+      <!-- Base/chassis -->
+      <rect x="4" y="28" width="56" height="18" rx="3" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <!-- Body enclosure -->
+      <rect x="8" y="10" width="48" height="20" rx="2" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+      <!-- Engine block -->
+      <rect x="10" y="13" width="22" height="14" rx="2" fill="rgba(255,255,255,0.22)"/>
+      <!-- Cylinder fins -->
+      <line x1="14" y1="13" x2="14" y2="27" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+      <line x1="18" y1="13" x2="18" y2="27" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+      <line x1="22" y1="13" x2="22" y2="27" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+      <line x1="26" y1="13" x2="26" y2="27" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+      <!-- Alternator housing (circle) -->
+      <circle cx="46" cy="20" r="8" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+      <circle cx="46" cy="20" r="4" fill="rgba(255,255,255,0.3)"/>
+      <!-- Bolt dots on alternator -->
+      <circle cx="46" cy="13.5" r="1" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="46" cy="26.5" r="1" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="39.5" cy="20" r="1" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="52.5" cy="20" r="1" fill="rgba(255,255,255,0.6)"/>
+      <!-- Exhaust pipe -->
+      <rect x="10" y="6" width="5" height="7" rx="1" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <!-- Exhaust smoke puffs -->
+      <circle cx="12.5" cy="4" r="1.5" fill="rgba(255,255,255,0.2)"/>
+      <circle cx="14" cy="2.5" r="1" fill="rgba(255,255,255,0.13)"/>
+      <circle cx="11" cy="2" r="0.8" fill="rgba(255,255,255,0.1)"/>
+      <!-- Control panel on right side of chassis -->
+      <rect x="38" y="30" width="18" height="14" rx="2" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+      <!-- Panel LED indicators -->
+      <circle cx="42" cy="34" r="1.5" fill="#4ade80" style="filter:drop-shadow(0 0 2px #4ade80)"/>
+      <circle cx="47" cy="34" r="1.5" fill="#facc15" style="filter:drop-shadow(0 0 2px #facc15)"/>
+      <circle cx="52" cy="34" r="1.5" fill="#f87171" style="filter:drop-shadow(0 0 2px #f87171)"/>
+      <!-- Panel display bar -->
+      <rect x="40" y="37" width="14" height="4" rx="1" fill="rgba(255,255,255,0.15)"/>
+      <!-- Wheels -->
+      <circle cx="14" cy="46" r="3.5" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+      <circle cx="14" cy="46" r="1.5" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="50" cy="46" r="3.5" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+      <circle cx="50" cy="46" r="1.5" fill="rgba(255,255,255,0.4)"/>
+      <!-- Output cables on left -->
+      <rect x="4" y="31" width="6" height="3" rx="1" fill="rgba(255,255,255,0.3)"/>
+      <rect x="4" y="36" width="6" height="3" rx="1" fill="rgba(255,255,255,0.3)"/>
+    </svg>
+    <div>
+      <div class="header-title">Bitácora de Generador</div>
+      <div class="header-sub">Registro de operaciones · Parámetros + Combustible</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="hbtn green" onclick="loadRecords()">🔄 Actualizar</button>
+    <a href="https://docs.google.com/spreadsheets/d/1ynpNfwMJrWlY3chaL75YcMvKLyO0dS3e_NzwDaOZ3VQ/edit" target="_blank" class="hbtn primary">📊 Ver Sheets</a>
+    <button class="hbtn red" onclick="clearAll()">🗑 Limpiar todo</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showView('dashboard')" id="tab-dash">
+    📊 Dashboard <span class="badge-count" id="nav-count">0</span>
+  </button>
+  <button class="nav-tab" onclick="showView('form')" id="tab-form">
+    ➕ Nuevo registro
+  </button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="dash">
+
+    <!-- Metrics -->
+    <div class="metrics">
+      <div class="metric-card total">
+        <div class="metric-val" id="m-total">0</div>
+        <div class="metric-label">Operaciones totales</div>
+      </div>
+      <div class="metric-card emergencia">
+        <div class="metric-val" id="m-emerg">0</div>
+        <div class="metric-label">Emergencias</div>
+      </div>
+      <div class="metric-card programada">
+        <div class="metric-val" id="m-prog">0</div>
+        <div class="metric-label">Programadas</div>
+      </div>
+      <div class="metric-card proveedor">
+        <div class="metric-val" id="m-prov">0</div>
+        <div class="metric-label">Llamadas proveedor</div>
+      </div>
+    </div>
+
+    <!-- Info cards: último operador + site -->
+    <div id="info-cards" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div class="metric-card" style="text-align:left;display:flex;align-items:center;gap:14px;padding:14px 16px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">👤</div>
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--text3);margin-bottom:3px;">ÚLTIMO OPERADOR</div>
+          <div style="font-size:15px;font-weight:800;color:var(--navy);" id="ic-operador">—</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;" id="ic-turno">—</div>
+        </div>
+      </div>
+      <div class="metric-card" style="text-align:left;display:flex;align-items:center;gap:14px;padding:14px 16px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--orange-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">📍</div>
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:var(--text3);margin-bottom:3px;">SITE / UBICACIÓN</div>
+          <div style="font-size:15px;font-weight:800;color:var(--navy);" id="ic-site">—</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;" id="ic-fecha">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Últimos niveles de combustible -->
+    <div class="progress-wrap" id="fuel-summary" style="display:none;">
+      <div class="progress-title">⛽ Último nivel de combustible registrado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+        <div>
+          <div class="fuel-bar-label">
+            <span>Tanque base</span>
+            <span id="fs-base-pct" style="font-weight:700;color:var(--navy);">—</span>
+          </div>
+          <div class="fuel-bar-track">
+            <div class="fuel-bar-fill" id="fs-base-bar" style="width:0%;background:var(--navy);"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono);" id="fs-base-lt">—</div>
+        </div>
+        <div>
+          <div class="fuel-bar-label">
+            <span>Tanque de día</span>
+            <span id="fs-dia-pct" style="font-weight:700;color:var(--blue-mid);">—</span>
+          </div>
+          <div class="fuel-bar-track">
+            <div class="fuel-bar-fill" id="fs-dia-bar" style="width:0%;background:var(--blue-mid);"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono);" id="fs-dia-lt">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="section-row">
+      <div class="section-title">HISTORIAL DE OPERACIONES</div>
+      <button class="btn-refresh" onclick="loadRecords()">↻ Actualizar</button>
+    </div>
+    <div class="record-list" id="record-list">
+      <div class="empty">
+        <span class="empty-icon">🔌</span>
+        Sin registros aún.<br>Toca <strong>+ Nuevo registro</strong> para comenzar.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM (multi-step) -->
+<div class="view" id="view-form">
+  <div class="form-view">
+
+    <div class="form-header">
+      <!-- Step indicators -->
+      <div class="form-steps">
+        <div class="step-item">
+          <div class="step-circle active" id="sc1">1</div>
+          <div class="step-label active" id="sl1">Tipo</div>
+        </div>
+        <div class="step-connector" id="conn1"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc2">2</div>
+          <div class="step-label" id="sl2">Operador</div>
+        </div>
+        <div class="step-connector" id="conn2"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc3">3</div>
+          <div class="step-label" id="sl3">Combustible</div>
+        </div>
+        <div class="step-connector" id="conn3"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc4">4</div>
+          <div class="step-label" id="sl4">Eléctrico</div>
+        </div>
+        <div class="step-connector" id="conn4"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc5">5</div>
+          <div class="step-label" id="sl5">Estado</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-body">
+
+      <!-- STEP 1: Tipo -->
+      <div class="form-section active" id="fs1">
+        <div class="section-head">Tipo de operación</div>
+        <div class="section-sub">¿Por qué arrancó el generador?</div>
+        <div class="tipo-grid">
+          <div class="tipo-card" id="tc-emergencia" onclick="selectTipo('Emergencia','emergencia')">
+            <span class="tipo-icon">🚨</span>
+            <div class="tipo-name">EMERGENCIA</div>
+          </div>
+          <div class="tipo-card" id="tc-programada" onclick="selectTipo('Programada','programada')">
+            <span class="tipo-icon">📅</span>
+            <div class="tipo-name">PROGRAMADA</div>
+          </div>
+          <div class="tipo-card" id="tc-proveedor" onclick="selectTipo('Reporte a proveedor','proveedor')">
+            <span class="tipo-icon">📞</span>
+            <div class="tipo-name">PROVEEDOR</div>
+          </div>
+        </div>
+        <div class="form-nav">
+          <button class="btn-next" onclick="goStep(2)">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Operador -->
+      <div class="form-section" id="fs2">
+        <div class="section-head">Datos del operador</div>
+        <div class="section-sub">¿Quién está registrando esta operación?</div>
+        <div class="field-row">
+          <div class="field">
+            <label>NOMBRE DEL OPERADOR</label>
+            <input type="text" id="f-operador" placeholder="Nombre completo">
+          </div>
+        <div id="fields-no-proveedor">
+          <div class="field" style="position:relative;">
+            <label>SITE / UBICACIÓN</label>
+            <div id="site-trigger" onclick="toggleSiteDropdown()"
+              style="border:1px solid var(--border);border-radius:var(--radius);padding:10px 36px 10px 12px;
+              background:var(--white);font-size:14px;cursor:pointer;box-shadow:var(--shadow);
+              color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+              display:flex;align-items:center;gap:8px;min-height:42px;">
+              <span id="site-trigger-label">— Seleccionar site —</span>
+            </div>
+            <span style="position:absolute;right:12px;top:34px;font-size:12px;color:var(--text3);pointer-events:none;">▾</span>
+            <input type="hidden" id="f-site">
+
+            <!-- DROPDOWN PANEL -->
+            <div id="site-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;
+              background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+              box-shadow:var(--shadow-md);max-height:320px;overflow-y:auto;padding:10px 12px;">
+
+              <input type="text" id="site-search" placeholder="🔍 Buscar site..."
+                oninput="filterSites(this.value)" onclick="event.stopPropagation()"
+                style="width:100%;margin-bottom:10px;padding:7px 10px;font-size:13px;
+                border:1px solid var(--border);border-radius:6px;background:var(--gray);">
+
+              <div class="site-grid" id="site-flat-grid">
+                <div class="site-btn" data-site="MXGT01" data-color="#1a3a6b" onclick="selectSite(this)">MXGT01</div>
+                <div class="site-btn" data-site="MXJC01" data-color="#1a3a6b" onclick="selectSite(this)">MXJC01</div>
+                <div class="site-btn" data-site="MXJC02" data-color="#1a3a6b" onclick="selectSite(this)">MXJC02</div>
+                <div class="site-btn" data-site="MXNL01" data-color="#1a3a6b" onclick="selectSite(this)">MXNL01</div>
+                <div class="site-btn" data-site="MXNL02" data-color="#1a3a6b" onclick="selectSite(this)">MXNL02</div>
+                <div class="site-btn" data-site="MXXEM03" data-color="#1a3a6b" onclick="selectSite(this)">MXXEM03</div>
+                <div class="site-btn" data-site="MXYU01" data-color="#1a3a6b" onclick="selectSite(this)">MXYU01</div>
+                <div class="site-btn" data-site="MX02" data-color="#1a3a6b" onclick="selectSite(this)">MX02</div>
+                <div class="site-btn" data-site="MX05" data-color="#1a3a6b" onclick="selectSite(this)">MX05</div>
+                <div class="site-btn" data-site="MX06" data-color="#1a3a6b" onclick="selectSite(this)">MX06</div>
+                <div class="site-btn" data-site="MX07" data-color="#1a3a6b" onclick="selectSite(this)">MX07</div>
+                <div class="site-btn" data-site="MX09" data-color="#1a3a6b" onclick="selectSite(this)">MX09</div>
+                <div class="site-btn" data-site="MX10" data-color="#1a3a6b" onclick="selectSite(this)">MX10</div>
+                <div class="site-btn" data-site="MX11" data-color="#1a3a6b" onclick="selectSite(this)">MX11</div>
+                <div class="site-btn" data-site="MX12" data-color="#1a3a6b" onclick="selectSite(this)">MX12</div>
+                <div class="site-btn" data-site="RC02" data-color="#1a3a6b" onclick="selectSite(this)">RC02</div>
+                <div class="site-btn" data-site="RC03" data-color="#1a3a6b" onclick="selectSite(this)">RC03</div>
+                <div class="site-btn" data-site="SAG1" data-color="#1a3a6b" onclick="selectSite(this)">SAG1</div>
+                <div class="site-btn" data-site="SBJ1" data-color="#1a3a6b" onclick="selectSite(this)">SBJ1</div>
+                <div class="site-btn" data-site="SCJ1" data-color="#1a3a6b" onclick="selectSite(this)">SCJ1</div>
+                <div class="site-btn" data-site="SCN1" data-color="#1a3a6b" onclick="selectSite(this)">SCN1</div>
+                <div class="site-btn" data-site="SCP1" data-color="#1a3a6b" onclick="selectSite(this)">SCP1</div>
+                <div class="site-btn" data-site="SCQ1" data-color="#1a3a6b" onclick="selectSite(this)">SCQ1</div>
+                <div class="site-btn" data-site="SCT1" data-color="#1a3a6b" onclick="selectSite(this)">SCT1</div>
+                <div class="site-btn" data-site="SCU1" data-color="#1a3a6b" onclick="selectSite(this)">SCU1</div>
+                <div class="site-btn" data-site="SCY1" data-color="#1a3a6b" onclick="selectSite(this)">SCY1</div>
+                <div class="site-btn" data-site="SDG1" data-color="#1a3a6b" onclick="selectSite(this)">SDG1</div>
+                <div class="site-btn" data-site="SEN1" data-color="#1a3a6b" onclick="selectSite(this)">SEN1</div>
+                <div class="site-btn" data-site="SGD1" data-color="#1a3a6b" onclick="selectSite(this)">SGD1</div>
+                <div class="site-btn" data-site="SGD3" data-color="#1a3a6b" onclick="selectSite(this)">SGD3</div>
+                <div class="site-btn" data-site="SJA1" data-color="#1a3a6b" onclick="selectSite(this)">SJA1</div>
+                <div class="site-btn" data-site="SJD1" data-color="#1a3a6b" onclick="selectSite(this)">SJD1</div>
+                <div class="site-btn" data-site="SLP1" data-color="#1a3a6b" onclick="selectSite(this)">SLP1</div>
+                <div class="site-btn" data-site="SLV1" data-color="#1a3a6b" onclick="selectSite(this)">SLV1</div>
+                <div class="site-btn" data-site="SLW1" data-color="#1a3a6b" onclick="selectSite(this)">SLW1</div>
+                <div class="site-btn" data-site="SLZ1" data-color="#1a3a6b" onclick="selectSite(this)">SLZ1</div>
+                <div class="site-btn" data-site="SMA1" data-color="#1a3a6b" onclick="selectSite(this)">SMA1</div>
+                <div class="site-btn" data-site="SMD1" data-color="#1a3a6b" onclick="selectSite(this)">SMD1</div>
+                <div class="site-btn" data-site="SML1" data-color="#1a3a6b" onclick="selectSite(this)">SML1</div>
+                <div class="site-btn" data-site="SMO1" data-color="#1a3a6b" onclick="selectSite(this)">SMO1</div>
+                <div class="site-btn" data-site="SMX1" data-color="#1a3a6b" onclick="selectSite(this)">SMX1</div>
+                <div class="site-btn" data-site="SMX2" data-color="#1a3a6b" onclick="selectSite(this)">SMX2</div>
+                <div class="site-btn" data-site="SMX3" data-color="#1a3a6b" onclick="selectSite(this)">SMX3</div>
+                <div class="site-btn" data-site="SMX3/ 1/4 de milla" data-color="#1a3a6b" onclick="selectSite(this)">SMX3/¼mi</div>
+                <div class="site-btn" data-site="SMX4" data-color="#1a3a6b" onclick="selectSite(this)">SMX4</div>
+                <div class="site-btn" data-site="SMX5" data-color="#1a3a6b" onclick="selectSite(this)">SMX5</div>
+                <div class="site-btn" data-site="SMX7" data-color="#1a3a6b" onclick="selectSite(this)">SMX7</div>
+                <div class="site-btn" data-site="SMX8" data-color="#1a3a6b" onclick="selectSite(this)">SMX8</div>
+                <div class="site-btn" data-site="SMX9" data-color="#1a3a6b" onclick="selectSite(this)">SMX9</div>
+                <div class="site-btn" data-site="SMZ1" data-color="#1a3a6b" onclick="selectSite(this)">SMZ1</div>
+                <div class="site-btn" data-site="SNG1/SNO1" data-color="#1a3a6b" onclick="selectSite(this)">SNG1/SNO1</div>
+                <div class="site-btn" data-site="SPB1" data-color="#1a3a6b" onclick="selectSite(this)">SPB1</div>
+                <div class="site-btn" data-site="SPD1" data-color="#1a3a6b" onclick="selectSite(this)">SPD1</div>
+                <div class="site-btn" data-site="SPV1" data-color="#1a3a6b" onclick="selectSite(this)">SPV1</div>
+                <div class="site-btn" data-site="SPZ1" data-color="#1a3a6b" onclick="selectSite(this)">SPZ1</div>
+                <div class="site-btn" data-site="SQR1" data-color="#1a3a6b" onclick="selectSite(this)">SQR1</div>
+                <div class="site-btn" data-site="SRX1" data-color="#1a3a6b" onclick="selectSite(this)">SRX1</div>
+                <div class="site-btn" data-site="SSL1" data-color="#1a3a6b" onclick="selectSite(this)">SSL1</div>
+                <div class="site-btn" data-site="STA1" data-color="#1a3a6b" onclick="selectSite(this)">STA1</div>
+                <div class="site-btn" data-site="STG1" data-color="#1a3a6b" onclick="selectSite(this)">STG1</div>
+                <div class="site-btn" data-site="STL1" data-color="#1a3a6b" onclick="selectSite(this)">STL1</div>
+                <div class="site-btn" data-site="STN1" data-color="#1a3a6b" onclick="selectSite(this)">STN1</div>
+                <div class="site-btn" data-site="STR1" data-color="#1a3a6b" onclick="selectSite(this)">STR1</div>
+                <div class="site-btn" data-site="STT1" data-color="#1a3a6b" onclick="selectSite(this)">STT1</div>
+                <div class="site-btn" data-site="SUR1" data-color="#1a3a6b" onclick="selectSite(this)">SUR1</div>
+                <div class="site-btn" data-site="SVR1" data-color="#1a3a6b" onclick="selectSite(this)">SVR1</div>
+                <div class="site-btn" data-site="SVS1" data-color="#1a3a6b" onclick="selectSite(this)">SVS1</div>
+                <div class="site-btn" data-site="SXL1" data-color="#1a3a6b" onclick="selectSite(this)">SXL1</div>
+                <div class="site-btn" data-site="SZC1" data-color="#1a3a6b" onclick="selectSite(this)">SZC1</div>
+                <div class="site-btn" data-site="SZL1" data-color="#1a3a6b" onclick="selectSite(this)">SZL1</div>
+                <div class="site-btn" data-site="SZM1" data-color="#1a3a6b" onclick="selectSite(this)">SZM1</div>
+                <div class="site-btn" data-site="XEM02/SC01" data-color="#1a3a6b" onclick="selectSite(this)">XEM02/SC01</div>
+                <div class="site-btn" data-site="XEM03" data-color="#1a3a6b" onclick="selectSite(this)">XEM03</div>
+                <div class="site-btn" data-site="XGD02" data-color="#1a3a6b" onclick="selectSite(this)">XGD02</div>
+                <div class="site-btn" data-site="XMT02" data-color="#1a3a6b" onclick="selectSite(this)">XMT02</div>
+                <div class="site-btn" data-site="XPB1" data-color="#1a3a6b" onclick="selectSite(this)">XPB1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>FECHA DE INICIO</label>
+            <input type="date" id="f-fecha">
+          </div>
+          <div class="field">
+            <label>HORA DE INICIO</label>
+            <input type="time" id="f-hora">
+          </div>
+        </div>
+        <div class="field">
+          <label>DURACIÓN (minutos)</label>
+          <input type="number" id="f-duracion" placeholder="ej. 45" min="0">
+        </div>
+        </div><!-- end fields-no-proveedor -->
+
+        <!-- PROVEEDOR: teléfono de emergencia — visible solo si tipo = proveedor -->
+        <div id="proveedor-panel" style="display:none;margin-top:4px;">
+          <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#92400e;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              📞 DATOS DEL PROVEEDOR
+            </div>
+            <div class="field" style="margin-bottom:10px;">
+              <label style="color:#92400e;">NOMBRE DEL PROVEEDOR</label>
+              <input type="text" id="f-prov-nombre" placeholder="ej. RAMSAN Fuerza Motriz"
+                style="border-color:#fed7aa;background:#fff7ed;">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label style="color:#92400e;">TELÉFONO DE EMERGENCIA</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="tel" id="f-prov-tel" placeholder="ej. 55 1234 5678"
+                  style="border-color:#fed7aa;background:#fff7ed;flex:1;font-family:var(--mono);font-size:16px;letter-spacing:0.05em;">
+                <a href="#" style="display:flex;align-items:center;justify-content:center;gap:6px;
+                  background:#ea580c;color:white;border-radius:var(--radius);padding:10px 16px;
+                  font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0;"
+                  onclick="callProveedor(event)">📲 Llamar</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Motivo del llamado -->
+          <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:var(--radius-lg);padding:14px 16px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#991b1b;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              🚨 MOTIVO DEL LLAMADO
+            </div>
+            <div class="field" style="margin-bottom:10px;">
+              <label style="color:#991b1b;">HORA DE REPORTE</label>
+              <input type="time" id="f-falla-hora" style="border-color:#fecaca;background:#fef2f2;">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label style="color:#991b1b;">TIPO DE FALLA</label>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">
+                <div class="falla-btn" onclick="selectFalla(this,'No arrancó')">No arrancó</div>
+                <div class="falla-btn" onclick="selectFalla(this,'No toma la carga')">No toma la carga</div>
+                <div class="falla-btn" onclick="selectFalla(this,'Baja presión de aceite')">Baja presión de aceite</div>
+                <div class="falla-btn" onclick="selectFalla(this,'Interruptor abierto')">Interruptor abierto</div>
+                <div class="falla-btn" onclick="selectFalla(this,'Alta temperatura')">Alta temperatura</div>
+                <div class="falla-btn" onclick="selectFalla(this,'Falla de batería')">Falla de batería</div>
+                <div class="falla-btn" onclick="selectFalla(this,'Otro')">+ Otro</div>
+              </div>
+              <input type="text" id="f-falla-tipo" placeholder="Falla seleccionada o escribe aquí..."
+                style="margin-top:8px;border-color:#fecaca;background:#fef2f2;">
+            </div>
+          </div>
+
+          <!-- Compartir por WhatsApp -->
+          <button onclick="compartirWhatsApp()" style="width:100%;margin-top:10px;padding:13px;
+            border-radius:var(--radius);border:none;
+            background:#25d366;color:white;font-size:14px;font-weight:700;
+            cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Compartir por WhatsApp
+          </button>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-back" onclick="goStep(1)">← Atrás</button>
+          <button class="btn-next" onclick="goStep(3)">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Combustible -->
+      <div class="form-section" id="fs3">
+        <div class="section-head">Nivel de combustible</div>
+        <div class="section-sub">Registra los niveles al momento del arranque</div>
+
+        <div class="fuel-card">
+          <div class="fuel-title">⛽ Tanque base</div>
+          <div class="field-row">
+            <div class="field">
+              <label>CAPACIDAD TOTAL (L)</label>
+              <input type="number" id="f-base-cap" placeholder="ej. 5000" oninput="updateFuelBar('base')">
+            </div>
+            <div class="field">
+              <label>NIVEL ACTUAL (L)</label>
+              <input type="number" id="f-base-lt" placeholder="ej. 3200" oninput="updateFuelBar('base')">
+            </div>
+          </div>
+          <div class="fuel-bar-wrap">
+            <div class="fuel-bar-label">
+              <span>Nivel</span>
+              <span id="base-pct" style="font-weight:700;color:var(--navy);">—</span>
+            </div>
+            <div class="fuel-bar-track">
+              <div class="fuel-bar-fill" id="base-bar" style="width:0%;background:var(--navy);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fuel-card" style="background:#eff6ff;border-color:#bfdbfe;">
+          <div class="fuel-title">🪣 Tanque de día</div>
+          <div class="field-row">
+            <div class="field">
+              <label>CAPACIDAD TOTAL (L)</label>
+              <input type="number" id="f-dia-cap" placeholder="ej. 500" oninput="updateFuelBar('dia')">
+            </div>
+            <div class="field">
+              <label>NIVEL ACTUAL (L)</label>
+              <input type="number" id="f-dia-lt" placeholder="ej. 320" oninput="updateFuelBar('dia')">
+            </div>
+          </div>
+          <div class="fuel-bar-wrap">
+            <div class="fuel-bar-label">
+              <span>Nivel</span>
+              <span id="dia-pct" style="font-weight:700;color:var(--blue-mid);">—</span>
+            </div>
+            <div class="fuel-bar-track">
+              <div class="fuel-bar-fill" id="dia-bar" style="width:0%;background:var(--blue-mid);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-back" onclick="goStep(2)">← Atrás</button>
+          <button class="btn-next" onclick="goStep(4)">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Parámetros eléctricos -->
+      <div class="form-section" id="fs4">
+        <div class="params-banner">
+          <div class="led"></div>
+          <div>
+            Parámetros del alternador
+            <div class="params-nom">Ref: 480V L-L · 277V L-N · 60 Hz · FP 0.80–1.00</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>VOLTAJE L-L (V)</label>
+            <input type="number" id="f-vll" placeholder="ej. 480">
+            <div class="field-hint">Entre fases</div>
+          </div>
+          <div class="field">
+            <label>VOLTAJE L-N (V)</label>
+            <input type="number" id="f-vln" placeholder="ej. 277">
+            <div class="field-hint">Fase a neutro</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>FRECUENCIA (Hz)</label>
+          <input type="number" id="f-hz" placeholder="ej. 60.0" step="0.1">
+        </div>
+        <div class="field-row3">
+          <div class="field">
+            <label>I₁ (A)</label>
+            <input type="number" id="f-i1" placeholder="ej. 120">
+          </div>
+          <div class="field">
+            <label>I₂ (A)</label>
+            <input type="number" id="f-i2" placeholder="ej. 115">
+          </div>
+          <div class="field">
+            <label>I₃ (A)</label>
+            <input type="number" id="f-i3" placeholder="ej. 118">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>POT. ACTIVA (kW)</label>
+            <input type="number" id="f-kw" placeholder="ej. 240" step="0.1">
+          </div>
+          <div class="field">
+            <label>POT. APARENTE (kVA)</label>
+            <input type="number" id="f-kva" placeholder="ej. 300" step="0.1">
+          </div>
+        </div>
+        <div class="field">
+          <label>FACTOR DE POTENCIA (cos φ)</label>
+          <input type="number" id="f-fp" placeholder="ej. 0.92" step="0.01" min="0" max="1">
+          <div class="field-hint">Rango ideal: 0.80 – 1.00</div>
+        </div>
+
+        <!-- MOTOR DIESEL -->
+        <div class="params-banner" style="background:linear-gradient(135deg,#78350f,#92400e);margin-top:20px;">
+          <div class="led" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24;"></div>
+          <div>
+            Parámetros del motor diésel / gas
+            <div class="params-nom">Mecánicos — salud del motor que mueve el alternador</div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>PRESIÓN DE ACEITE (PSI)</label>
+            <input type="number" id="f-aceite" placeholder="ej. 60" step="0.1">
+            <div class="field-hint">Normal: 40–80 PSI</div>
+          </div>
+          <div class="field">
+            <label>TEMP. REFRIGERANTE (°C)</label>
+            <input type="number" id="f-temp" placeholder="ej. 88" step="0.1">
+            <div class="field-hint">Normal: 80–95 °C · Alarma &gt;100 °C</div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>VELOCIDAD DEL MOTOR (RPM)</label>
+            <input type="number" id="f-rpm" placeholder="ej. 1800">
+            <div class="field-hint">60 Hz → 1800 RPM · 50 Hz → 1500 RPM</div>
+          </div>
+          <div class="field">
+            <label>VOLTAJE BATERÍA (V CC)</label>
+            <input type="number" id="f-bat" placeholder="ej. 13.8" step="0.1">
+            <div class="field-hint">12V: 13.5–14.5V · 24V: 26–28V</div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-back" onclick="goStep(3)">← Atrás</button>
+          <button class="btn-next" onclick="goStep(5)">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- STEP 5: Estado de control + observaciones -->
+      <div class="form-section" id="fs5">
+        <div class="section-head">Estado de control</div>
+        <div class="section-sub">Selecciona uno o más estados activos en el controlador</div>
+
+        <div class="estado-grid" style="gap:12px;margin-bottom:20px;">
+
+          <div class="estado-btn" id="eb1" onclick="toggleEstado('Modo AUTO','eb1')">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+              <div class="estado-num">ESTADO 1</div>
+              <div class="estado-chk" id="echk1">✓</div>
+            </div>
+            <div class="estado-name">Modo AUTO</div>
+            <div class="estado-desc">Listo para arrancar si falla red CFE</div>
+          </div>
+
+          <div class="estado-btn" id="eb2" onclick="toggleEstado('Running / En Operación','eb2')">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+              <div class="estado-num">ESTADO 2</div>
+              <div class="estado-chk" id="echk2">✓</div>
+            </div>
+            <div class="estado-name">Running</div>
+            <div class="estado-desc">Motor girando a RPM de trabajo</div>
+          </div>
+
+          <div class="estado-btn" id="eb3" onclick="toggleEstado('Generator Available','eb3')">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+              <div class="estado-num">ESTADO 3</div>
+              <div class="estado-chk" id="echk3">✓</div>
+            </div>
+            <div class="estado-name">Generator Available</div>
+            <div class="estado-desc">V y Hz estables, listo para carga</div>
+          </div>
+
+          <div class="estado-btn" id="eb4" onclick="toggleEstado('Genset On Load','eb4')">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+              <div class="estado-num">ESTADO 4</div>
+              <div class="estado-chk" id="echk4">✓</div>
+            </div>
+            <div class="estado-name">Genset On Load</div>
+            <div class="estado-desc">Alimentando edificio / planta</div>
+          </div>
+
+        </div>
+
+        <div class="field">
+          <label>OBSERVACIONES / ALARMAS</label>
+          <textarea id="f-obs" placeholder="Notas adicionales, alarmas activas, condiciones especiales..."></textarea>
+        </div>
+        <div class="form-nav">
+          <button class="btn-back" onclick="goStep(selTipoKey==='proveedor'?2:4)">← Atrás</button>
+          <button class="btn-save" id="btn-save" onclick="guardar()">💾 Guardar registro</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalClick(event)">
+  <div class="modal">
+    <div class="modal-top">
+      <div>
+        <div id="md-badge" class="badge" style="display:inline-block;margin-bottom:6px;"></div>
+        <div id="md-title" style="font-size:17px;font-weight:800;color:var(--navy);"></div>
+        <div id="md-sub" style="font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:2px;"></div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="detail-grid" id="md-body"></div>
+    <button class="btn-delete" onclick="deleteRec()">🗑 Eliminar registro</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SHEET_ID = '1ynpNfwMJrWlY3chaL75YcMvKLyO0dS3e_NzwDaOZ3VQ';
+const SK = 'gen_bv5';
+let records = [];
+let selTipo = '', selTipoKey = '';
+let currentStep = 1;
+let selectedIdx = null;
+
+// ── STORAGE ──
+async function save() {
+  const d = JSON.stringify(records);
+  try { await window.storage?.set(SK, d); } catch(e){}
+  try { localStorage.setItem(SK, d); } catch(e){}
+}
+async function load() {
+  try { const r = await window.storage?.get(SK); if(r?.value){ records=JSON.parse(r.value); return; } } catch(e){}
+  try { const r = localStorage.getItem(SK); if(r) records=JSON.parse(r); } catch(e){}
+}
+
+// ── VIEWS ──
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+(v==='dashboard'?'dash':'form')).classList.add('active');
+  if(v==='form'){ resetForm(); goStep(1); setDefaults(); }
+  if(v==='dashboard') renderDash();
+}
+
+// ── STEP NAVIGATION ──
+const STEPS = 5;
+function goStep(s) {
+  // For proveedor: step 2 → step 5 (skip 3 & 4)
+  if (selTipoKey === 'proveedor') {
+    if (s === 3 || s === 4) s = 5;
+    if (s === 'back2') s = 2;
+  }
+  currentStep = s;
+  for(let i=1;i<=STEPS;i++){
+    const sec = document.getElementById('fs'+i);
+    if(sec) sec.classList.toggle('active', i===s);
+    const sc = document.getElementById('sc'+i);
+    const sl = document.getElementById('sl'+i);
+    if(sc){
+      // For proveedor, mark 3 & 4 as skipped (gray, not done)
+      const skipped = selTipoKey === 'proveedor' && (i===3||i===4);
+      sc.className = 'step-circle' + (skipped?' skipped':i<s?' done':i===s?' active':'');
+      sc.textContent = skipped ? '—' : (i<s ? '✓' : i);
+    }
+    if(sl){
+      sl.className = 'step-label' + (i===s?' active':'');
+    }
+    if(i<STEPS){
+      const conn = document.getElementById('conn'+i);
+      if(conn) conn.className = 'step-connector' + (i<s?' done':'');
+    }
+  }
+}
+
+function setDefaults() {
+  const now = new Date();
+  document.getElementById('f-fecha').value = now.toISOString().split('T')[0];
+  document.getElementById('f-hora').value = now.toTimeString().slice(0,5);
+}
+
+function selectFalla(el, label) {
+  document.querySelectorAll('.falla-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const input = document.getElementById('f-falla-tipo');
+  if (label === 'Otro') {
+    input.value = '';
+    input.focus();
+    input.removeAttribute('readonly');
+  } else {
+    input.value = label;
+  }
+}
+
+function selectTipo(label, key) {
+  selTipo = label; selTipoKey = key;
+  ['emergencia','programada','proveedor'].forEach(k => {
+    document.getElementById('tc-'+k).className = 'tipo-card';
+  });
+  document.getElementById('tc-'+key).className = 'tipo-card sel-'+key;
+  const provPanel = document.getElementById('proveedor-panel');
+  if (provPanel) provPanel.style.display = key === 'proveedor' ? 'block' : 'none';
+  const extraFields = document.getElementById('fields-no-proveedor');
+  if (extraFields) extraFields.style.display = key === 'proveedor' ? 'none' : 'block';
+}
+
+function compartirWhatsApp() {
+  const op   = document.getElementById('f-operador')?.value || '—';
+  const prov = document.getElementById('f-prov-nombre')?.value || '—';
+  const tel  = document.getElementById('f-prov-tel')?.value || '—';
+  const hora = document.getElementById('f-falla-hora')?.value || '—';
+  const falla= document.getElementById('f-falla-tipo')?.value || '—';
+  const site = document.getElementById('f-site')?.value || '—';
+  const now  = new Date().toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
+  const msg  = `🔴 *REPORTE A PROVEEDOR — GENERADOR*\n\n` +
+    `📅 Fecha/Hora: ${now}\n` +
+    `👤 Operador: ${op}\n` +
+    `📍 Site: ${site}\n\n` +
+    `⏰ Hora de reporte: ${hora}\n` +
+    `🚨 Falla: ${falla}\n\n` +
+    `📞 Proveedor: ${prov}\n` +
+    `📲 Tel: ${tel}`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function callProveedor(e) {
+  e.preventDefault();
+  const tel = document.getElementById('f-prov-tel')?.value.trim().replace(/\s/g,'');
+  if (tel) window.location.href = 'tel:' + tel;
+}
+
+function toggleSiteDropdown() {
+  const dd = document.getElementById('site-dropdown');
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    setTimeout(() => document.getElementById('site-search')?.focus(), 50);
+  }
+}
+
+function selectSite(el) {
+  document.querySelectorAll('.site-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.background = '';
+    b.style.borderColor = '';
+    b.style.color = '';
+  });
+  el.classList.add('selected');
+  const color = el.dataset.color;
+  el.style.background = color;
+  el.style.borderColor = color;
+  el.style.color = 'white';
+  const siteVal = el.dataset.site;
+  document.getElementById('f-site').value = siteVal;
+
+  // Update trigger display
+  const trigger = document.getElementById('site-trigger-label');
+  trigger.textContent = siteVal;
+  trigger.style.color = color;
+  trigger.style.fontWeight = '700';
+
+  // Close dropdown
+  document.getElementById('site-dropdown').style.display = 'none';
+  if (document.getElementById('site-search')) {
+    document.getElementById('site-search').value = '';
+    filterSites('');
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('site-dropdown');
+  const trigger = document.getElementById('site-trigger');
+  if (dd && trigger && !dd.contains(e.target) && !trigger.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+function filterSites(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('#site-flat-grid .site-btn').forEach(b => {
+    b.classList.toggle('hidden', !(!term || b.dataset.site.toLowerCase().includes(term)));
+  });
+}
+
+function showCustomSite() {
+  const input = document.getElementById('f-site');
+  input.removeAttribute('readonly');
+  input.focus();
+}
+
+function toggleChk(id) {
+  const box = document.getElementById(id);
+  box.classList.toggle('checked');
+}
+
+function getChecks() {
+  return {
+    vlt:    document.getElementById('chk-vlt')?.classList.contains('checked'),
+    hz:     document.getElementById('chk-hz')?.classList.contains('checked'),
+    amp:    document.getElementById('chk-amp')?.classList.contains('checked'),
+    kw:     document.getElementById('chk-kw')?.classList.contains('checked'),
+    kva:    document.getElementById('chk-kva')?.classList.contains('checked'),
+    fp:     document.getElementById('chk-fp')?.classList.contains('checked'),
+    aceite: document.getElementById('chk-aceite')?.classList.contains('checked'),
+    temp:   document.getElementById('chk-temp')?.classList.contains('checked'),
+    rpm:    document.getElementById('chk-rpm')?.classList.contains('checked'),
+    bat:    document.getElementById('chk-bat')?.classList.contains('checked'),
+    fuel:   document.getElementById('chk-fuel')?.classList.contains('checked'),
+  };
+}
+
+function resetChecks() {
+  ['chk-vlt','chk-hz','chk-amp','chk-kw','chk-kva','chk-fp',
+   'chk-aceite','chk-temp','chk-rpm','chk-bat','chk-fuel'].forEach(id => {
+    document.getElementById(id)?.classList.remove('checked');
+  });
+}
+
+// Estado — multi-select
+const estadosSeleccionados = new Set();
+
+function toggleEstado(label, btnId) {
+  const btn = document.getElementById(btnId);
+  if (estadosSeleccionados.has(label)) {
+    estadosSeleccionados.delete(label);
+    btn.classList.remove('selected');
+  } else {
+    estadosSeleccionados.add(label);
+    btn.classList.add('selected');
+  }
+}
+
+function resetEstados() {
+  estadosSeleccionados.clear();
+  ['eb1','eb2','eb3','eb4'].forEach(id => document.getElementById(id)?.classList.remove('selected'));
+}
+
+// ── FUEL BARS ──
+function updateFuelBar(tank) {
+  const cap = parseFloat(document.getElementById('f-'+tank+'-cap').value)||0;
+  const lt  = parseFloat(document.getElementById('f-'+tank+'-lt').value)||0;
+  const pct = cap>0 ? Math.min(100,Math.round((lt/cap)*100)) : 0;
+  const color = pct<20?'#dc2626':pct<40?'#ea580c':'#1a3a6b';
+  document.getElementById(tank+'-bar').style.width = pct+'%';
+  document.getElementById(tank+'-bar').style.background = color;
+  document.getElementById(tank+'-pct').textContent = cap>0 ? pct+'%' : '—';
+  document.getElementById(tank+'-pct').style.color = color;
+}
+
+function g(id){ return (document.getElementById(id)?.value||'').trim(); }
+
+// ── SAVE ──
+async function guardar() {
+  if(!selTipo){ toast('Selecciona el tipo de operación','err'); goStep(1); return; }
+  if(!g('f-operador')){ toast('Ingresa el nombre del operador','err'); goStep(2); return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled=true; btn.textContent='Guardando...';
+
+  const baseCap=parseFloat(g('f-base-cap'))||0, baseLt=parseFloat(g('f-base-lt'))||0;
+  const diaCap=parseFloat(g('f-dia-cap'))||0, diaLt=parseFloat(g('f-dia-lt'))||0;
+  const basePct = baseCap>0?Math.round((baseLt/baseCap)*100):null;
+  const diaPct  = diaCap>0?Math.round((diaLt/diaCap)*100):null;
+  const fp = parseFloat(g('f-fp'));
+  const hz = parseFloat(g('f-hz'));
+
+  const rec = {
+    id: Date.now(),
+    tipo: selTipo, tipoKey: selTipoKey,
+    operador: g('f-operador'), turno: g('f-turno'),
+    provNombre: g('f-prov-nombre'), provTel: g('f-prov-tel'),
+    fallaHora: g('f-falla-hora'), fallaTipo: g('f-falla-tipo'),
+    fecha: g('f-fecha'), hora: g('f-hora'), duracion: g('f-duracion'),
+    site: g('f-site'),
+    baseCap, baseLt, basePct,
+    diaCap, diaLt, diaPct,
+    estado: [...estadosSeleccionados].join(' · ') || '',
+    vll: g('f-vll'), vln: g('f-vln'), hz: g('f-hz'),
+    i1: g('f-i1'), i2: g('f-i2'), i3: g('f-i3'),
+    kw: g('f-kw'), kva: g('f-kva'), fp: g('f-fp'),
+    aceite: g('f-aceite'), temp: g('f-temp'), rpm: g('f-rpm'), bat: g('f-bat'),
+    obs: g('f-obs'),
+    checks: getChecks(),
+    ts: new Date().toISOString()
+  };
+
+  records.unshift(rec);
+  await save();
+
+  try { await sendSheets(rec); toast('Guardado en Google Sheets ✓','ok'); }
+  catch(e) { toast('Guardado local (sin conexión a Sheets)',''); }
+
+  btn.disabled=false; btn.textContent='💾 Guardar registro';
+  showView('dashboard');
+}
+
+async function sendSheets(r) {
+  const row = [
+    r.fecha+' '+r.hora, r.tipo, r.operador, r.turno, r.site||'',
+    r.duracion||'', r.estado,
+    r.baseLt?(r.baseLt+'L / '+r.baseCap+'L ('+r.basePct+'%)'):'',
+    r.diaLt?(r.diaLt+'L / '+r.diaCap+'L ('+r.diaPct+'%)'):'',
+    r.vll?r.vll+'V':'', r.vln?r.vln+'V':'',
+    r.hz?r.hz+' Hz':'',
+    [r.i1,r.i2,r.i3].filter(Boolean).map(v=>v+'A').join(' / '),
+    r.kw?r.kw+' kW':'', r.kva?r.kva+' kVA':'', r.fp||'',
+    r.obs
+  ].join('\t');
+
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-6', max_tokens:500,
+      mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gdrive'}],
+      messages:[{role:'user',content:`Append a row to Google Sheets ID: ${SHEET_ID}, Sheet1:\n${row}\nColumns: Fecha/Hora, Tipo, Operador, Turno, Site, Duración(min), Estado Control, Tanque Base, Tanque Día, Voltaje L-L, Voltaje L-N, Frecuencia, Corriente, Pot.Activa, Pot.Aparente, Factor Potencia, Observaciones`}]
+    })
+  });
+  if(!res.ok) throw new Error('err');
+}
+
+function resetForm() {
+  selTipo=''; selTipoKey='';
+  ['emergencia','programada','proveedor'].forEach(k=>document.getElementById('tc-'+k).className='tipo-card');
+  resetEstados();
+  resetChecks();
+  const ids=['f-operador','f-duracion','f-site','f-prov-nombre','f-prov-tel',
+    'f-falla-hora','f-falla-tipo',
+    'f-base-cap','f-base-lt','f-dia-cap','f-dia-lt',
+    'f-vll','f-vln','f-hz','f-i1','f-i2','f-i3','f-kw','f-kva','f-fp',
+    'f-aceite','f-temp','f-rpm','f-bat','f-obs'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.querySelectorAll('.site-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.background = '';
+    b.style.borderColor = '';
+    b.style.color = '';
+  });
+  const panel = document.getElementById('proveedor-panel');
+  if(panel) panel.style.display = 'none';
+  const extraFields = document.getElementById('fields-no-proveedor');
+  if(extraFields) extraFields.style.display = 'block';
+  document.querySelectorAll('.falla-btn').forEach(b => b.classList.remove('selected'));
+  const tl = document.getElementById('site-trigger-label');
+  if(tl){ tl.textContent='— Seleccionar site —'; tl.style.color=''; tl.style.fontWeight=''; }
+  const dd = document.getElementById('site-dropdown');
+  if(dd) dd.style.display='none';
+  ['base','dia'].forEach(t=>{
+    const bar=document.getElementById(t+'-bar'); if(bar){ bar.style.width='0%'; }
+    const pct=document.getElementById(t+'-pct'); if(pct) pct.textContent='—';
+  });
+}
+
+function clearAll(){
+  if(!confirm('¿Eliminar todos los registros locales?')) return;
+  records=[]; save(); renderDash(); toast('Registros eliminados');
+}
+
+// ── DASHBOARD ──
+function renderDash() {
+  document.getElementById('m-total').textContent = records.length;
+  document.getElementById('m-emerg').textContent = records.filter(r=>r.tipo==='Emergencia').length;
+  document.getElementById('m-prog').textContent  = records.filter(r=>r.tipo==='Programada').length;
+  document.getElementById('m-prov').textContent  = records.filter(r=>r.tipo==='Llamada proveedor').length;
+  document.getElementById('nav-count').textContent = records.length;
+
+  // Info cards: último operador + site
+  const last = records[0];
+  const infoCards = document.getElementById('info-cards');
+  if(last) {
+    infoCards.style.display = 'grid';
+    document.getElementById('ic-operador').textContent = last.operador || '—';
+    document.getElementById('ic-turno').textContent = last.turno ? 'Turno ' + last.turno : '—';
+    document.getElementById('ic-site').textContent = last.site || 'No especificado';
+    document.getElementById('ic-fecha').textContent = (last.fecha||'') + (last.hora?' · '+last.hora:'');
+  } else { infoCards.style.display = 'none'; }
+
+  // Último nivel combustible
+  const withFuel = records.find(r=>r.baseLt||r.diaLt);
+  const fuelSummary = document.getElementById('fuel-summary');
+  if(withFuel) {
+    fuelSummary.style.display='block';
+    if(withFuel.basePct!=null){
+      const c=withFuel.basePct<20?'#dc2626':withFuel.basePct<40?'#ea580c':'var(--navy)';
+      document.getElementById('fs-base-pct').textContent=withFuel.basePct+'%';
+      document.getElementById('fs-base-pct').style.color=c;
+      document.getElementById('fs-base-bar').style.width=withFuel.basePct+'%';
+      document.getElementById('fs-base-bar').style.background=c;
+      document.getElementById('fs-base-lt').textContent=withFuel.baseLt+'L / '+withFuel.baseCap+'L';
+    }
+    if(withFuel.diaPct!=null){
+      const c=withFuel.diaPct<20?'#dc2626':withFuel.diaPct<40?'#ea580c':'var(--blue-mid)';
+      document.getElementById('fs-dia-pct').textContent=withFuel.diaPct+'%';
+      document.getElementById('fs-dia-pct').style.color=c;
+      document.getElementById('fs-dia-bar').style.width=withFuel.diaPct+'%';
+      document.getElementById('fs-dia-bar').style.background=c;
+      document.getElementById('fs-dia-lt').textContent=withFuel.diaLt+'L / '+withFuel.diaCap+'L';
+    }
+  } else { fuelSummary.style.display='none'; }
+
+  const list = document.getElementById('record-list');
+  if(!records.length){
+    list.innerHTML='<div class="empty"><span class="empty-icon">🔌</span>Sin registros aún.<br>Toca <strong>+ Nuevo registro</strong> para comenzar.</div>';
+    return;
+  }
+
+  list.innerHTML = records.map((r,i) => {
+    const fp=parseFloat(r.fp), hz=parseFloat(r.hz);
+    const fpOk=fp>=0.8, hzOk=(hz>=59.5&&hz<=60.5);
+    const basePct=r.basePct, diaPct=r.diaPct;
+    const fuelWarn=basePct<20||diaPct<20;
+
+    let pills = '';
+    if(r.site) pills+=`<span class="pill">${r.site}</span>`;
+    if(r.vll) pills+=`<span class="pill">${r.vll}V L-L</span>`;
+    if(r.hz)  pills+=`<span class="pill ${hzOk?'ok':'warn'}">${r.hz} Hz</span>`;
+    if(r.kw)  pills+=`<span class="pill">${r.kw} kW</span>`;
+    if(r.fp)  pills+=`<span class="pill ${fpOk?'ok':'warn'}">FP ${r.fp}</span>`;
+    if(r.basePct!=null) pills+=`<span class="pill ${r.basePct<20?'warn':'fuel'}">⛽ Base ${r.basePct}%</span>`;
+    if(r.diaPct!=null)  pills+=`<span class="pill ${r.diaPct<20?'warn':'fuel'}">🪣 Día ${r.diaPct}%</span>`;
+    if(r.estado) pills+=`<span class="pill">${r.estado}</span>`;
+
+    return `<div class="rec ${r.tipoKey||'programada'}" onclick="openModal(${i})">
+      <div class="rec-top">
+        <span class="badge ${r.tipoKey||'programada'}">${r.tipo}</span>
+        <span class="rec-fecha">${r.fecha} ${r.hora}</span>
+      </div>
+      <div class="rec-op">${r.operador||'—'} · Turno ${r.turno||'—'}</div>
+      <div class="rec-pills">${pills}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadRecords() {
+  await load(); renderDash(); toast('Actualizado ✓','ok');
+}
+
+// ── MODAL ──
+function openModal(i) {
+  selectedIdx=i; const r=records[i];
+  document.getElementById('md-badge').className='badge '+(r.tipoKey||'programada');
+  document.getElementById('md-badge').textContent=r.tipo;
+  document.getElementById('md-title').textContent=r.operador||'—';
+  document.getElementById('md-sub').textContent=
+    (r.fecha||'')+(r.hora?' '+r.hora:'')+(r.turno?' · Turno '+r.turno:'')+(r.duracion?' · '+r.duracion+' min':'')+(r.site?' · '+r.site:'');
+
+  const fp=parseFloat(r.fp);
+  const fpColor = fp>=0.8?'green':fp>0?'red':'';
+  const hz=parseFloat(r.hz);
+  const hzColor=(hz>=59.5&&hz<=60.5)?'green':'red';
+  const bcColor=r.basePct<20?'red':r.basePct<40?'orange':'blue';
+  const dcColor=r.diaPct<20?'red':r.diaPct<40?'orange':'blue';
+
+  const cells=[
+    ['TANQUE BASE', r.baseLt?(r.baseLt+'L / '+r.baseCap+'L — '+r.basePct+'%'):'—', bcColor],
+    ['TANQUE DE DÍA', r.diaLt?(r.diaLt+'L / '+r.diaCap+'L — '+r.diaPct+'%'):'—', dcColor],
+    ...(r.tipoKey==='emergencia' && (r.fallaHora||r.fallaTipo) ? [
+      ['HORA DE REPORTE', r.fallaHora||'—', 'red'],
+      ['TIPO DE FALLA', r.fallaTipo||'—', 'red'],
+    ] : []),
+    ...(r.tipoKey==='proveedor' ? [
+      ['PROVEEDOR', r.provNombre||'—', 'blue'],
+      ['TEL. EMERGENCIA', r.provTel ? `<a href="tel:${r.provTel}" style="color:var(--orange);font-weight:700;">${r.provTel} 📲</a>` : '—', ''],
+    ] : []),
+    ['VOLTAJE L-L', r.vll?r.vll+' V':'—', 'blue'],
+    ['VOLTAJE L-N', r.vln?r.vln+' V':'—', 'blue'],
+    ['FRECUENCIA', r.hz?r.hz+' Hz':'—', hzColor],
+    ['FACTOR POT.', r.fp||'—', fpColor],
+    ['CORRIENTE I₁', r.i1?r.i1+' A':'—', ''],
+    ['CORRIENTE I₂', r.i2?r.i2+' A':'—', ''],
+    ['CORRIENTE I₃', r.i3?r.i3+' A':'—', ''],
+    ['POT. ACTIVA', r.kw?r.kw+' kW':'—', ''],
+    ['POT. APARENTE', r.kva?r.kva+' kVA':'—', ''],
+    ['PRESIÓN DE ACEITE', r.aceite?r.aceite+' PSI':'—', r.aceite&&r.aceite>=40&&r.aceite<=80?'green':r.aceite?'red':''],
+    ['TEMP. REFRIGERANTE', r.temp?r.temp+' °C':'—', r.temp&&r.temp<=95?'green':r.temp?'red':''],
+    ['VELOCIDAD MOTOR', r.rpm?r.rpm+' RPM':'—', ''],
+    ['VOLTAJE BATERÍA', r.bat?r.bat+' V CC':'—', r.bat&&r.bat>=13.5&&r.bat<=14.5?'green':r.bat&&r.bat>=26&&r.bat<=28?'green':r.bat?'orange':''],
+    ['ESTADO CONTROL', r.estado||'—', 'blue', 'full'],
+    ['OBSERVACIONES', r.obs||'—', '', 'full'],
+  ];
+
+  document.getElementById('md-body').innerHTML = cells.map(([l,v,c,cls])=>
+    `<div class="detail-cell${cls?' '+cls:''}"><label>${l}</label><div class="detail-val${c?' '+c:''}">${v}</div></div>`
+  ).join('');
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModalClick(e){ if(e.target===document.getElementById('modal')) document.getElementById('modal').classList.remove('open'); }
+
+function deleteRec(){
+  if(selectedIdx===null) return;
+  records.splice(selectedIdx,1); save(); renderDash();
+  document.getElementById('modal').classList.remove('open');
+  toast('Registro eliminado');
+}
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',2800);
+}
+
+// ── INIT ──
+load().then(()=>renderDash());
+</script>
+</body>
+</html>
