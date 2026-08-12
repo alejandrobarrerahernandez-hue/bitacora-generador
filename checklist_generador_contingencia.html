@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a2b4a">
+<title>Checklist Generador - Contingencia</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a2b4a;font-size:14px;}
+.top-header{background:#1a2b4a;color:white;padding:16px 24px 0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.top-header-row{display:flex;align-items:center;gap:12px;padding-bottom:14px;}
+.header-icon{font-size:26px;color:#f5a623;}
+.header-text h1{font-size:17px;font-weight:700;}
+.header-text .sub{font-size:12px;color:#8fa3c0;}
+.badge-cont{margin-left:auto;background:#c0392b;color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.progress-strip{border-top:1px solid #243655;padding:7px 0 0;}
+.progress-meta{font-size:11px;color:#8fa3c0;margin-bottom:5px;}
+.progress-track{height:4px;background:#243655;border-radius:2px;}
+.progress-fill{height:4px;background:#f5a623;border-radius:2px;transition:width .3s;}
+.timer-strip{background:#1e3357;display:flex;align-items:center;gap:16px;padding:8px 24px;border-bottom:1px solid #243655;}
+.timer-val{font-size:22px;font-weight:700;color:#4cd964;letter-spacing:1px;}
+.timer-val.warn{color:#f5a623;}.timer-val.crit{color:#e74c3c;}
+.timer-label{font-size:11px;color:#8fa3c0;}
+.timer-btns{display:flex;gap:6px;margin-left:auto;}
+.tbtn{border:none;border-radius:6px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;}
+.tbtn-start{background:#27ae60;color:white;}.tbtn-stop{background:#c0392b;color:white;}.tbtn-reset{background:#344d6e;color:#8fa3c0;}
+.main{padding:16px 16px 32px;max-width:900px;margin:0 auto;}
+.card{background:white;border-radius:10px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid #edf0f4;cursor:pointer;user-select:none;}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.card-badge{background:#edf0f4;color:#1a2b4a;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.card-badge.done{background:#d4f0de;color:#1a7a3c;}.card-badge.warn{background:#fef3cd;color:#8a6000;}
+.card-chevron{font-size:11px;color:#8fa3c0;transition:transform .2s;}
+.card-chevron.open{transform:rotate(180deg);}
+.card-body{padding:0;}
+.fields-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 20px;}
+.fields-grid.cols2{grid-template-columns:repeat(2,1fr);}
+.field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8fa3c0;margin-bottom:4px;}
+.field input,.field select{width:100%;border:1px solid #dde2ea;border-radius:6px;padding:6px 9px;font-size:13px;color:#1a2b4a;background:#f7f9fb;outline:none;}
+.field.span2{grid-column:span 2;}
+.item{display:flex;align-items:flex-start;gap:12px;padding:11px 20px;border-bottom:1px solid #f0f3f7;cursor:pointer;}
+.item:hover{background:#fafbfd;}.item.done{background:#f3fbf6;}
+.item.done .item-desc{color:#8fa3c0;text-decoration:line-through;}
+.check-box{width:20px;height:20px;min-width:20px;border:2px solid #d0d7e3;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.check-box.on{background:#27ae60;border-color:#27ae60;}
+.check-box.on::after{content:'✓';color:white;font-size:12px;font-weight:800;}
+.item-num{font-size:11px;color:#b0b9c8;min-width:18px;margin-top:2px;}
+.item-body{flex:1;}
+.item-desc{font-size:13px;line-height:1.45;}
+.item-hint{font-size:11px;color:#8fa3c0;margin-top:2px;font-style:italic;}
+.item-inputs{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px;align-items:center;}
+.item-inputs label{font-size:10px;text-transform:uppercase;color:#8fa3c0;font-weight:700;}
+.item-inputs input,.item-inputs select{border:1px solid #dde2ea;border-radius:5px;padding:4px 7px;font-size:12px;background:#f7f9fb;}
+.item-inputs input{width:80px;}.item-inputs input.w120{width:120px;}.item-inputs input.w160{width:160px;}
+.alert-banner{display:none;align-items:flex-start;gap:8px;background:#fde8e8;border:1px solid #f5c6cb;border-radius:7px;margin:0 20px 10px;padding:9px 12px;font-size:12px;color:#c0392b;}
+.alert-banner.show{display:flex;}.alert-banner.yellow{background:#fef9e7;border-color:#fde68a;color:#8a6000;}
+.ronda-ctrl{display:flex;align-items:center;gap:10px;padding:9px 20px;background:#f7f9fb;border-bottom:1px solid #edf0f4;}
+.ronda-lbl{font-size:12px;font-weight:700;}
+.btn-add-ronda{margin-left:auto;border:none;border-radius:6px;background:#1a2b4a;color:white;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;}
+.ronda-block{border-left:3px solid #3b82f6;margin:10px 20px;border-radius:0 8px 8px 0;background:#f7f9fb;padding:10px 14px;}
+.ronda-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px;}
+.ronda-top strong{font-size:12px;}.ronda-top label{font-size:10px;text-transform:uppercase;color:#8fa3c0;font-weight:700;margin-right:3px;}
+.ronda-top input{border:1px solid #dde2ea;border-radius:5px;padding:3px 7px;font-size:12px;background:white;}
+.readings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.readings-grid label{font-size:10px;text-transform:uppercase;color:#8fa3c0;font-weight:700;display:block;margin-bottom:3px;}
+.readings-grid input{width:100%;border:1px solid #dde2ea;border-radius:5px;padding:5px 7px;font-size:12px;background:white;}
+.ronda-notes{margin-top:8px;}
+.ronda-notes label{font-size:10px;text-transform:uppercase;color:#8fa3c0;font-weight:700;display:block;margin-bottom:3px;}
+.ronda-notes input{width:100%;border:1px solid #dde2ea;border-radius:5px;padding:5px 7px;font-size:12px;background:white;}
+.sec-divider{font-size:10px;font-weight:700;text-transform:uppercase;color:#8fa3c0;padding:10px 20px 4px;border-top:1px solid #f0f3f7;}
+.footer-btns{display:flex;gap:10px;margin-top:6px;}
+.btn-print{flex:1;padding:12px;background:#1a2b4a;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-reset-all{padding:12px 20px;background:#edf0f4;color:#5a6a82;border:none;border-radius:8px;font-size:13px;cursor:pointer;}
+@media(max-width:640px){.fields-grid{grid-template-columns:1fr 1fr;}.readings-grid{grid-template-columns:1fr 1fr;}.main{padding:10px 10px 32px;}.item{padding:12px 14px;}.timer-strip{padding:8px 14px;}.timer-val{font-size:26px;}.top-header{padding:12px 14px 0;}}
+@media print{.top-header{position:static;}.timer-btns,.btn-print,.btn-reset-all,.btn-add-ronda{display:none!important;}body{background:white;}.card{box-shadow:none;border:1px solid #dde2ea;}}
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="top-header-row">
+    <div class="header-icon">⚡</div>
+    <div class="header-text"><h1>Checklist Mantenimiento de Generadores</h1><div class="sub">Solo durante operacion continua · Motor encendido</div></div>
+    <div class="badge-cont">CONTINGENCIA &gt;2 HRS</div>
+  </div>
+  <div class="progress-strip">
+    <div class="progress-meta" id="prog-meta">0 de 22 items revisados</div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+</div>
+<div class="timer-strip">
+  <div><div class="timer-val" id="timer">00:00:00</div><div class="timer-label" id="timer-lbl">Motor detenido · Presiona Iniciar al arrancar</div></div>
+  <div class="timer-btns">
+    <button class="tbtn tbtn-start" onclick="startTimer()">▶ Iniciar</button>
+    <button class="tbtn tbtn-stop" onclick="stopTimer()">⏸ Detener</button>
+    <button class="tbtn tbtn-reset" onclick="resetTimer()">↺</button>
+  </div>
+</div>
+<div class="main">
+<div class="card">
+  <div class="card-header" onclick="toggleCard(this)"><div class="card-title">📋 INFORMACION DEL SERVICIO</div><span class="card-chevron open">▼</span></div>
+  <div class="card-body"><div class="fields-grid">
+    <div class="field span2"><label>Generador / Marca</label><input type="text" placeholder="Ej: Caterpillar 500kW"></div>
+    <div class="field"><label>No. Serie</label><input type="text" placeholder="3018515194"></div>
+    <div class="field"><label>Site</label><input type="text" placeholder="Nombre del site"></div>
+    <div class="field"><label>Orden de Servicio</label><input type="text" placeholder="OS-2024-001"></div>
+    <div class="field"><label>Tecnico</label><input type="text" placeholder="Nombre del tecnico"></div>
+    <div class="field"><label>Aprobado por</label><input type="text" placeholder="Carlos Guerrero"></div>
+    <div class="field"><label>Fecha</label><input type="date" id="f-fecha"></div>
+    <div class="field"><label>Hora inicio</label><input type="time" id="f-inicio"></div>
+    <div class="field"><label>Horometro inicio (hrs)</label><input type="number" placeholder="Hrs"></div>
+    <div class="field"><label>Tanque Base - Nivel (%)</label><input type="number" min="0" max="100" placeholder="%" oninput="checkFuel(this.value)"></div>
+    <div class="field"><label>Tanque Dia - Nivel (%)</label><input type="number" min="0" max="100" placeholder="%" oninput="checkFuel(this.value)"></div>
+  </div>
+  <div class="alert-banner yellow" id="alert-fuel-ini">⚠️ Nivel bajo. Si esta por debajo del 50%, notificar urgente.</div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header" onclick="toggleCard(this)"><div class="card-title">⚡ 1. AL ARRANCAR</div><span class="card-badge" id="b-s1">0 / 6</span><span class="card-chevron open">▼</span></div>
+  <div class="card-body">
+    <div class="item" id="i1" onclick="tick('i1','s1')"><div class="check-box" id="c1"></div><div class="item-num">1</div><div class="item-body"><div class="item-desc">Sistema arranco en modo AUTOMATICO</div><div class="item-inputs" onclick="stop(event)"><label>Resultado</label><select><option value="">-</option><option>OK Automatico</option><option>Manual</option><option>Fallo</option></select></div></div></div>
+    <div class="item" id="i2" onclick="tick('i2','s1')"><div class="check-box" id="c2"></div><div class="item-num">2</div><div class="item-body"><div class="item-desc">Equipos de respaldo electrico probados</div><div class="item-inputs" onclick="stop(event)"><label>S/N</label><select><option value="">-</option><option>Si</option><option>Parcial</option><option>No</option></select><label>Nota</label><input type="text" class="w160" placeholder="..."></div></div></div>
+    <div class="item" id="i3" onclick="tick('i3','s1')"><div class="check-box" id="c3"></div><div class="item-num">3</div><div class="item-body"><div class="item-desc">Nivel combustible mayor a 75% - Tanque Base y Tanque de Dia</div><div class="item-inputs" onclick="stop(event)"><label>Tanque Base (%)</label><input type="number" min="0" max="100" placeholder="%"><label>Tanque Dia (%)</label><input type="number" min="0" max="100" placeholder="%"><label>Hora</label><input type="time"></div></div></div>
+    <div class="item" id="i4" onclick="tick('i4','s1')"><div class="check-box" id="c4"></div><div class="item-num">4</div><div class="item-body"><div class="item-desc">Sin fugas visibles (combustible, aceite, refrigerante)</div><div class="item-inputs" onclick="stop(event)"><label>Estado</label><select><option value="">-</option><option>Sin fugas</option><option>Fuga menor</option><option>Fuga importante</option></select></div><div class="item-inputs" onclick="stop(event)" style="margin-top:5px"><label>Proveedor notificado</label><select><option value="">-</option><option>Si</option><option>No aplica</option></select><label>Hora</label><input type="time"></div></div></div>
+    <div class="item" id="i5" onclick="tick('i5','s1')"><div class="check-box" id="c5"></div><div class="item-num">5</div><div class="item-body"><div class="item-desc">Sin ruidos inusuales en el motor</div><div class="item-inputs" onclick="stop(event)"><label>Estado</label><select><option value="">-</option><option>Normal</option><option>Ruido leve</option><option>Ruido severo</option></select></div><div class="item-inputs" onclick="stop(event)" style="margin-top:5px"><label>Proveedor notificado</label><select><option value="">-</option><option>Si</option><option>No aplica</option></select><label>Hora</label><input type="time"></div></div></div>
+    <div class="item" id="i6" onclick="tick('i6','s1')"><div class="check-box" id="c6"></div><div class="item-num">6</div><div class="item-body"><div class="item-desc">Extintor presente y vigente</div><div class="item-inputs" onclick="stop(event)"><label>Vencimiento</label><input type="month"><label>Estado</label><select><option value="">-</option><option>OK</option><option>Vencido</option></select></div></div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header" onclick="toggleCard(this)"><div class="card-title">📊 2. LECTURAS ELECTRICAS</div><span class="card-badge" id="b-s2">0 / 6</span><span class="card-chevron open">▼</span></div>
+  <div class="card-body">
+    <div class="ronda-ctrl"><span class="ronda-lbl" id="ronda-title">🔁 Ronda 1 · Al arrancar</span><button class="btn-add-ronda" onclick="addRonda()">+ Nueva ronda</button></div>
+    <div id="rondas-wrap"><div class="ronda-block" id="ronda-1">
+      <div class="ronda-top"><strong>Ronda 1</strong><label>Hora</label><input type="time"><label>Responsable</label><input type="text" placeholder="..." style="width:110px"></div>
+      <div class="readings-grid">
+        <div><label>Tension L-L (V)</label><input type="number" placeholder="V"></div>
+        <div><label>Tension L-N (V)</label><input type="number" placeholder="V"></div>
+        <div><label>Corriente (A)</label><input type="number" placeholder="A"></div>
+        <div><label>Frecuencia (Hz)</label><input type="number" placeholder="Hz"></div>
+        <div><label>Presion aceite (kPa)</label><input type="number" placeholder="kPa"></div>
+        <div><label>Bateria HMI (Vcc)</label><input type="number" placeholder="Vcc"></div>
+      </div>
+      <div class="ronda-notes"><label>Anomalias</label><input type="text" placeholder="Sin anomalias..."></div>
+    </div></div>
+    <div class="sec-divider">Confirmacion de registros</div>
+    <div class="item" id="i7" onclick="tick('i7','s2')"><div class="check-box" id="c7"></div><div class="item-num">✓</div><div class="item-body"><div class="item-desc">Lecturas tension L-L registradas</div></div></div>
+    <div class="item" id="i8" onclick="tick('i8','s2')"><div class="check-box" id="c8"></div><div class="item-num">✓</div><div class="item-body"><div class="item-desc">Lecturas tension L-N registradas</div></div></div>
+    <div class="item" id="i9" onclick="tick('i9','s2')"><div class="check-box" id="c9"></div><div class="item-num">✓</div><div class="item-body"><div class="item-desc">Corriente (A) registrada</div></div></div>
+    <div class="item" id="i10" onclick="tick('i10','s2')"><div class="check-box" id="c10"></div><div class="item-num">✓</div><div class="item-body"><div class="item-desc">Frecuencia (Hz) registrada</div></div></div>
+    <div class="item" id="i11" onclick="tick('i11','s2')"><div class="check-box" id="c11"></div><div class="item-num">✓</div><div class="item-body"><div class="item-desc">Presion aceite registrada y en rango normal</div></div></div>
+    <div class="item" id="i12" onclick="tick('i12','s2')"><div class="check-box" id="c12"></div><div class="item-num">✓</div><div class="item-body"><div class="item-desc">Tension bateria HMI registrada</div></div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header" onclick="toggleCard(this)"><div class="card-title">🔁 3. MONITOREO PERIODICO CADA 30-60 MIN</div><span class="card-badge" id="b-s3">0 / 4</span><span class="card-chevron open">▼</span></div>
+  <div class="card-body">
+    <div class="item" id="i13" onclick="tick('i13','s3')"><div class="check-box" id="c13"></div><div class="item-num">1</div><div class="item-body"><div class="item-desc">Nivel combustible cada hora - Tanque Base y Tanque de Dia</div><div class="item-inputs" onclick="stop(event)" style="flex-direction:column;align-items:flex-start;gap:10px"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><strong style="font-size:11px;min-width:90px">Tanque Base</strong><label>1h(%)</label><input type="number" min="0" max="100" placeholder="%"><label>2h(%)</label><input type="number" min="0" max="100" placeholder="%"><label>3h(%)</label><input type="number" min="0" max="100" placeholder="%"><label>4h(%)</label><input type="number" min="0" max="100" placeholder="%"></div><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><strong style="font-size:11px;min-width:90px">Tanque Dia</strong><label>1h(%)</label><input type="number" min="0" max="100" placeholder="%"><label>2h(%)</label><input type="number" min="0" max="100" placeholder="%"><label>3h(%)</label><input type="number" min="0" max="100" placeholder="%"><label>4h(%)</label><input type="number" min="0" max="100" placeholder="%"></div></div></div></div>
+    <div class="item" id="i14" onclick="tick('i14','s3')"><div class="check-box" id="c14"></div><div class="item-num">2</div><div class="item-body"><div class="item-desc">Nivel aceite lubricante (cada 2 horas)</div><div class="item-inputs" onclick="stop(event)"><label>Estado</label><select><option value="">-</option><option>Nivel OK</option><option>Bajo</option><option>Muy bajo</option></select></div></div></div>
+    <div class="item" id="i15" onclick="tick('i15','s3')"><div class="check-box" id="c15"></div><div class="item-num">3</div><div class="item-body"><div class="item-desc">Temperatura motor normal</div><div class="item-inputs" onclick="stop(event)"><label>Estado</label><select><option value="">-</option><option>Normal</option><option>Elevada</option><option>Sobrecalentamiento</option></select></div></div></div>
+    <div class="item" id="i16" onclick="tick('i16','s3')"><div class="check-box" id="c16"></div><div class="item-num">4</div><div class="item-body"><div class="item-desc">Sin nuevas fugas ni ruidos inusuales</div><div class="item-inputs" onclick="stop(event)"><label>Estado</label><select><option value="">-</option><option>Sin novedad</option><option>Anomalia leve</option><option>Reportar urgente</option></select><label>Nota</label><input type="text" class="w160" placeholder="..."></div></div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header" onclick="toggleCard(this)"><div class="card-title">🔌 4. AL RESTAURAR ENERGIA Y APAGAR</div><span class="card-badge" id="b-s4">0 / 6</span><span class="card-chevron open">▼</span></div>
+  <div class="card-body">
+    <div class="item" id="i17" onclick="tick('i17','s4')"><div class="check-box" id="c17"></div><div class="item-num">1</div><div class="item-body"><div class="item-desc">Sistema queda en modo AUTOMATICO</div><div class="item-inputs" onclick="stop(event)"><label>Confirmado</label><select><option value="">-</option><option>En automatico</option><option>Manual - corregir</option></select></div></div></div>
+    <div class="item" id="i18" onclick="tick('i18','s4')"><div class="check-box" id="c18"></div><div class="item-num">2</div><div class="item-body"><div class="item-desc">Interruptores automaticos en posicion correcta</div><div class="item-inputs" onclick="stop(event)"><label>Estado</label><select><option value="">-</option><option>Correctos</option><option>Requiere ajuste</option></select></div></div></div>
+    <div class="item" id="i19" onclick="tick('i19','s4')"><div class="check-box" id="c19"></div><div class="item-num">3</div><div class="item-body"><div class="item-desc">Nivel final combustible - programar reabastecimiento si menor a 75%</div><div class="item-inputs" onclick="stop(event)"><label>Tanque Base final (%)</label><input type="number" min="0" max="100" placeholder="%"><label>Tanque Dia final (%)</label><input type="number" min="0" max="100" placeholder="%"><label>Reabastecimiento</label><select><option value="">-</option><option>Necesario</option><option>No necesario</option></select></div></div></div>
+    <div class="item" id="i20" onclick="tick('i20','s4')"><div class="check-box" id="c20"></div><div class="item-num">4</div><div class="item-body"><div class="item-desc">Cargador de bateria funcionando</div><div class="item-inputs" onclick="stop(event)"><label>Amperaje (A)</label><input type="number" placeholder="A"><label>Estado</label><select><option value="">-</option><option>Cargando</option><option>Sin carga</option></select></div></div></div>
+    <div class="item" id="i21" onclick="tick('i21','s4')"><div class="check-box" id="c21"></div><div class="item-num">5</div><div class="item-body"><div class="item-desc">Horometro final registrado</div><div class="item-inputs" onclick="stop(event)"><label>Horometro final (hrs)</label><input type="number" placeholder="Hrs"><label>Duracion total</label><input type="text" class="w120" placeholder="ej: 3h 20min"></div></div></div>
+    <div class="item" id="i22" onclick="tick('i22','s4')"><div class="check-box" id="c22"></div><div class="item-num">6</div><div class="item-body"><div class="item-desc">Reporte al proveedor de mantenimiento</div><div class="item-inputs" onclick="stop(event)"><label>¿Hubo falla?</label><select><option value="">-</option><option>No hubo</option><option>Si - reportado</option><option>Si - pendiente</option></select><label>Descripcion</label><input type="text" class="w160" placeholder="Describir falla"></div><div class="item-inputs" onclick="stop(event)" style="margin-top:6px"><label>Proveedor</label><input type="text" class="w160" placeholder="Nombre/empresa"><label>Hora reporte</label><input type="time"><label>Medio</label><select><option value="">-</option><option>Llamada</option><option>WhatsApp</option><option>Correo</option><option>Ticket</option></select></div></div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header" onclick="toggleCard(this)"><div class="card-title">✅ CIERRE DE REPORTE</div><span class="card-chevron open">▼</span></div>
+  <div class="card-body"><div style="padding:14px 20px 18px"><div class="fields-grid cols2">
+    <div class="field"><label>Tecnico que cierra el reporte</label><input type="text" id="email-tecnico" placeholder="Nombre del tecnico"></div>
+    <div class="field"><label>Hora de cierre</label><input type="time" id="email-hora"></div>
+    <div class="field span2"><label>Observaciones finales</label><input type="text" id="email-obs" placeholder="Equipo opero sin novedades / describir..."></div>
+  </div></div></div>
+</div>
+<div class="footer-btns">
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / PDF</button>
+  <button class="btn-reset-all" onclick="resetAll()">↺ Reiniciar</button>
+</div>
+</div>
+<script>
+let timerIv=null,t0=null,elapsed=0;
+function startTimer(){if(timerIv)return;t0=Date.now()-elapsed;timerIv=setInterval(function(){var ms=Date.now()-t0,h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);var el=document.getElementById('timer');el.textContent=p(h)+':'+p(m)+':'+p(s);el.className=h>=3?'timer-val crit':h>=2?'timer-val warn':'timer-val';document.getElementById('timer-lbl').textContent=h>=3?'⚠️ Mas de 3 horas en operacion':h>=2?'🟡 Contingencia larga activa':'🟢 Motor en operacion';},1000);if(!document.getElementById('f-inicio').value){var n=new Date();document.getElementById('f-inicio').value=n.toTimeString().slice(0,5);}}
+function stopTimer(){if(!timerIv)return;elapsed=Date.now()-t0;clearInterval(timerIv);timerIv=null;document.getElementById('timer-lbl').textContent='Motor detenido';}
+function resetTimer(){stopTimer();elapsed=0;document.getElementById('timer').textContent='00:00:00';document.getElementById('timer').className='timer-val';document.getElementById('timer-lbl').textContent='Motor detenido · Presiona Iniciar al arrancar';}
+function p(n){return n<10?'0'+n:n;}
+var SECS={s1:['i1','i2','i3','i4','i5','i6'],s2:['i7','i8','i9','i10','i11','i12'],s3:['i13','i14','i15','i16'],s4:['i17','i18','i19','i20','i21','i22']};
+var state={};
+function tick(id,sec){state[id]=!state[id];document.getElementById(id).classList.toggle('done',state[id]);var cid='c'+id.replace('i','');if(document.getElementById(cid))document.getElementById(cid).classList.toggle('on',state[id]);updateBadge(sec);updateProgress();}
+function updateBadge(sec){var items=SECS[sec],done=items.filter(function(i){return state[i];}).length;var el=document.getElementById('b-'+sec);if(el){el.textContent=done+' / '+items.length;el.className=done===items.length?'card-badge done':done>0?'card-badge warn':'card-badge';}}
+function updateProgress(){var all=[].concat.apply([],Object.values(SECS)),done=all.filter(function(i){return state[i];}).length;var pct=Math.round(done/all.length*100);document.getElementById('prog-fill').style.width=pct+'%';document.getElementById('prog-meta').textContent=done+' de '+all.length+' items revisados';}
+function toggleCard(header){var body=header.nextElementSibling;var chev=header.querySelector('.card-chevron');var hidden=body.style.display==='none';body.style.display=hidden?'':'none';chev.classList.toggle('open',hidden);}
+var rCount=1;
+function addRonda(){rCount++;var wrap=document.getElementById('rondas-wrap');var d=document.createElement('div');d.className='ronda-block';d.id='ronda-'+rCount;d.innerHTML='<div class="ronda-top"><strong>Ronda '+rCount+'</strong><label>Hora</label><input type="time"><label>Responsable</label><input type="text" placeholder="..." style="width:110px"></div><div class="readings-grid"><div><label>Tension L-L (V)</label><input type="number" placeholder="V"></div><div><label>Tension L-N (V)</label><input type="number" placeholder="V"></div><div><label>Corriente (A)</label><input type="number" placeholder="A"></div><div><label>Frecuencia (Hz)</label><input type="number" placeholder="Hz"></div><div><label>Presion aceite (kPa)</label><input type="number" placeholder="kPa"></div><div><label>Bateria (Vcc)</label><input type="number" placeholder="Vcc"></div></div><div class="ronda-notes"><label>Anomalias</label><input type="text" placeholder="Sin anomalias..."></div>';wrap.appendChild(d);document.getElementById('ronda-title').textContent='🔁 Ronda '+rCount+' activa';d.scrollIntoView({behavior:'smooth',block:'start'});}
+function checkFuel(v){document.getElementById('alert-fuel-ini').classList.toggle('show',v&&parseInt(v)<50);}
+function stop(e){e.stopPropagation();}
+function resetAll(){if(!confirm('¿Reiniciar todo el checklist?'))return;Object.keys(state).forEach(function(k){delete state[k];});document.querySelectorAll('.item').forEach(function(el){el.classList.remove('done');});document.querySelectorAll('.check-box').forEach(function(el){el.classList.remove('on');});Object.keys(SECS).forEach(function(s){updateBadge(s);});updateProgress();resetTimer();}
+document.getElementById('f-fecha').value=new Date().toISOString().slice(0,10);
+updateProgress();
+</script>
+</body>
+</html>
